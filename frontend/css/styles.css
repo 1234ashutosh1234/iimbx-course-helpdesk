@@ -1,0 +1,563 @@
+/* ==========================================================================
+   IIMBx Course Helpdesk — Stylesheet (DPM-101)
+   Clean, Professional University EdTech Theme
+   ========================================================================== */
+
+:root {
+    --color-primary: #0a2540;
+    --color-primary-dark: #06192c;
+    --color-accent: #0066cc;
+    --color-accent-light: #e8f2fc;
+    --color-success: #0f9d58;
+    --color-success-bg: #e6f4ea;
+    --color-warning: #f2994a;
+    --color-danger: #d93025;
+    --color-danger-bg: #fce8e6;
+    
+    --bg-page: #f4f6f9;
+    --bg-surface: #ffffff;
+    --bg-assistant-bubble: #ffffff;
+    --bg-user-bubble: #0a2540;
+    
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --text-user-bubble: #ffffff;
+    
+    --border-light: #e2e8f0;
+    --border-card: #cbd5e1;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-full: 9999px;
+    
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+}
+
+.app-wrapper {
+    width: 100%;
+    max-width: 980px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-surface);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+    border-left: 1px solid var(--border-light);
+    border-right: 1px solid var(--border-light);
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background-color: var(--color-primary);
+    color: #ffffff;
+    border-bottom: 2px solid var(--color-accent);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.brand-badge {
+    background-color: #ffffff;
+    color: var(--color-primary);
+    font-weight: 800;
+    font-size: 1.1rem;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.5px;
+}
+
+.header-titles h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.header-subtitle {
+    font-size: 0.82rem;
+    color: #93c5fd;
+    font-weight: 500;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #d1fae5;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 6px #10b981;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-dot.healthy {
+    background-color: #10b981;
+    box-shadow: 0 0 6px #10b981;
+}
+
+.status-dot.degraded {
+    background-color: #f59e0b;
+    box-shadow: 0 0 6px #f59e0b;
+}
+
+.status-dot.offline {
+    background-color: #ef4444;
+    box-shadow: 0 0 6px #ef4444;
+}
+
+/* --------------------------------------------------------------------------
+   Prototype Disclaimer Banner
+   -------------------------------------------------------------------------- */
+.prototype-banner {
+    background-color: #f1f5f9;
+    border-bottom: 1px solid var(--border-light);
+    color: #475569;
+    font-size: 0.75rem;
+    padding: 6px 24px;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.prototype-banner strong {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   Telemetry Cards Bar
+   -------------------------------------------------------------------------- */
+.telemetry-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 12px 24px;
+    background-color: #f8fafc;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.metric-card {
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease;
+}
+
+.metric-card.highlight-cache {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+}
+
+.metric-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    line-height: 1.2;
+    margin: 2px 0;
+}
+
+.metric-card.highlight-cache .metric-value {
+    color: var(--color-success);
+}
+
+.metric-subtext {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Chat Area
+   -------------------------------------------------------------------------- */
+.chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: #fdfdfd;
+}
+
+.chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.message-row {
+    display: flex;
+    width: 100%;
+}
+
+.message-row.user {
+    justify-content: flex-end;
+}
+
+.message-row.assistant {
+    justify-content: flex-start;
+}
+
+.message-bubble {
+    max-width: 82%;
+    padding: 14px 18px;
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    position: relative;
+    word-break: break-word;
+}
+
+.message-bubble.user {
+    background-color: var(--bg-user-bubble);
+    color: var(--text-user-bubble);
+    border-bottom-right-radius: 4px;
+    box-shadow: var(--shadow-sm);
+}
+
+.message-bubble.assistant {
+    background-color: var(--bg-assistant-bubble);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    border-bottom-left-radius: 4px;
+    box-shadow: var(--shadow-sm);
+}
+
+.message-author {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.message-text {
+    color: inherit;
+    white-space: pre-wrap;
+}
+
+.message-text p {
+    margin-bottom: 8px;
+    white-space: normal;
+}
+
+.message-text p:last-child {
+    margin-bottom: 0;
+}
+
+/* Starter Questions */
+.starter-suggestions {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-light);
+}
+
+.suggestion-title {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.suggestion-chip {
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: var(--color-primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.suggestion-chip:hover {
+    background-color: var(--color-accent-light);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+/* Source Badges */
+.source-footer {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-light);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.source-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.source-tag {
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    font-size: 0.74rem;
+    font-family: monospace;
+    padding: 2px 7px;
+    border-radius: 4px;
+}
+
+.cache-badge {
+    background-color: #dcfce7;
+    border: 1px solid #86efac;
+    color: #166534;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+}
+
+/* Typing Indicator */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.typing-indicator.hidden {
+    display: none;
+}
+
+.typing-bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f1f5f9;
+    border: 1px solid var(--border-light);
+    padding: 8px 14px;
+    border-radius: var(--radius-lg);
+}
+
+.typing-bubble .dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--color-accent);
+    border-radius: 50%;
+    animation: typingPulse 1.4s infinite ease-in-out both;
+}
+
+.typing-bubble .dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-bubble .dot:nth-child(2) { animation-delay: -0.16s; }
+
+.typing-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-left: 6px;
+    font-style: italic;
+}
+
+@keyframes typingPulse {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+/* --------------------------------------------------------------------------
+   Input Footer
+   -------------------------------------------------------------------------- */
+.app-footer {
+    padding: 14px 24px 18px 24px;
+    background-color: #ffffff;
+    border-top: 1px solid var(--border-light);
+}
+
+.error-banner {
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger);
+    border: 1px solid #fca5a5;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    margin-bottom: 10px;
+}
+
+.error-banner.hidden {
+    display: none;
+}
+
+.chat-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-box-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.chat-input {
+    flex: 1;
+    min-height: 44px;
+    max-height: 120px;
+    padding: 10px 14px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    border: 1.5px solid var(--border-card);
+    border-radius: var(--radius-md);
+    background-color: #ffffff;
+    color: var(--text-primary);
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.chat-input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.12);
+}
+
+.send-btn {
+    height: 44px;
+    padding: 0 20px;
+    background-color: var(--color-accent);
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color 0.15s ease, opacity 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.send-btn:hover:not(:disabled) {
+    background-color: #0052a3;
+}
+
+.send-btn:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.input-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    padding: 0 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Design
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+    .telemetry-bar {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 10px 16px;
+    }
+
+    .metric-card {
+        padding: 8px 12px;
+    }
+
+    .metric-value {
+        font-size: 1.25rem;
+    }
+
+    .app-header {
+        padding: 12px 16px;
+    }
+
+    .header-titles h1 {
+        font-size: 1.05rem;
+    }
+
+    .message-bubble {
+        max-width: 90%;
+    }
+
+    .app-footer {
+        padding: 10px 16px 14px 16px;
+    }
+}

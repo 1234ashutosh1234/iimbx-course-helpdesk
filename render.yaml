@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: iimbx-course-helpdesk
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.17
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
+      - key: DATABASE_PATH
+        value: /tmp/iimbx-course-helpdesk.db
+      - key: CACHE_TTL_SECONDS
+        value: "604800"
+      - key: IDEMPOTENCY_TTL_SECONDS
+        value: "86400"
+      - key: GEMINI_API_KEY
+        sync: false

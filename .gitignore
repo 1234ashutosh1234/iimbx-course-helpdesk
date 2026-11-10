@@ -1,0 +1,33 @@
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Databases & local storage
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Antigravity artifacts and scratch logs
+scratch/
+ai_sessions/*.tmp
