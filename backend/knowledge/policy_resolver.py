@@ -107,11 +107,11 @@ class PolicyResolver:
         ),
         CanonicalTopic.SQL_INDEXING_AND_KUBERNETES: PolicyFact(
             topic=CanonicalTopic.SQL_INDEXING_AND_KUBERNETES,
-            summary="SQL database indexing and Kubernetes deployment are not part of the DPM-101 curriculum.",
-            details="DPM-101 covers user research, product roadmapping, metrics, and AI feature design. Technical infrastructure topics such as SQL indexing or Kubernetes are not included.",
+            summary="The supplied DPM-101 course documents describe user research, product roadmapping, metrics, and AI feature design. They do not mention SQL database indexing or Kubernetes deployment.",
+            details="The course handbook (01_course_handbook.txt) describes topics including user research, product roadmapping, metrics, and AI feature design. It does not mention SQL database indexing or Kubernetes deployment.",
             source_files=["01_course_handbook.txt"],
             is_supported=False,
-            authority_note="Document 01 defines the curriculum; technical database indexing and Kubernetes are explicitly out of syllabus."
+            authority_note="Document 01 describes course topics; it does not mention SQL indexing or Kubernetes."
         ),
         CanonicalTopic.OFF_TOPIC: PolicyFact(
             topic=CanonicalTopic.OFF_TOPIC,
@@ -157,3 +157,64 @@ class PolicyResolver:
                 authority_note=fact.authority_note
             )
         return fact
+
+    @classmethod
+    def get_multi_topic_fact(cls, topics: List[CanonicalTopic]) -> PolicyFact:
+        """Retrieve or synthesize an authoritative PolicyFact across multiple topics.
+        
+        Guarantees:
+        - When FINAL_EXAM_DATE and EXAM_FORMAT are both requested, provides
+          the unified grounded policy response covering date, slots, and closed-book rules.
+        - Source files are deduplicated and validated against AuthorityHierarchy.
+        """
+        if not topics:
+            return cls.get_fact(CanonicalTopic.UNKNOWN)
+        if len(topics) == 1:
+            return cls.get_fact(topics[0])
+
+        topic_set = set(topics)
+
+        # Specialized synthesized response for combined Exam Date & Exam Format
+        if topic_set == {CanonicalTopic.FINAL_EXAM_DATE, CanonicalTopic.EXAM_FORMAT}:
+            return PolicyFact(
+                topic=CanonicalTopic.FINAL_EXAM_DATE,
+                summary=(
+                    "The Proctored Final Exam is scheduled for 20 November 2026, "
+                    "with appointment slots available between 10:00 AM and 8:00 PM IST. "
+                    "The examination is strictly CLOSED-BOOK. "
+                    "External websites, search engines, course notes and AI tools are not permitted."
+                ),
+                details=(
+                    "Official exam rules from Section 1 of 04_exam_rules_and_faq.txt. "
+                    "Exam Date is 20 November 2026 (Slots 10:00 AM to 8:00 PM IST, 90 minutes). "
+                    "Format is strictly CLOSED-BOOK with AI proctoring via webcam and microphone."
+                ),
+                source_files=["04_exam_rules_and_faq.txt"],
+                is_supported=True,
+                authority_note="Document 04_exam_rules_and_faq.txt Sections 1 and 2 are active official rules."
+            )
+
+        # Generic clean multi-topic synthesis
+        facts = [cls.get_fact(t) for t in topics]
+        combined_summary = " ".join(f.summary for f in facts)
+        combined_details = "\n\n".join(f.details for f in facts)
+        
+        seen_sources = set()
+        clean_sources: List[str] = []
+        for f in facts:
+            for s in f.source_files:
+                if s not in seen_sources:
+                    seen_sources.add(s)
+                    clean_sources.append(s)
+
+        is_supported = all(f.is_supported for f in facts)
+        notes = "; ".join(f.authority_note for f in facts if f.authority_note)
+
+        return PolicyFact(
+            topic=topics[0],
+            summary=combined_summary,
+            details=combined_details,
+            source_files=clean_sources,
+            is_supported=is_supported,
+            authority_note=notes or None
+        )

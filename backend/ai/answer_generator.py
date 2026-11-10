@@ -70,18 +70,23 @@ class AnswerGenerator:
         )
 
         topic = evidence.canonical_topic
+        topics = getattr(evidence, "canonical_topics", None) or [topic]
+        topic_str = "+".join(sorted(t.value for t in topics))
 
         # Step 2: Handle Unsupported Inquiries (Zero Gemini API Calls)
-        if not evidence.is_supported or topic in {
-            CanonicalTopic.REFUND_POLICY,
-            CanonicalTopic.SQL_INDEXING_AND_KUBERNETES,
-            CanonicalTopic.OFF_TOPIC,
-            CanonicalTopic.UNKNOWN,
-        }:
+        if not evidence.is_supported or any(
+            t in {
+                CanonicalTopic.REFUND_POLICY,
+                CanonicalTopic.SQL_INDEXING_AND_KUBERNETES,
+                CanonicalTopic.OFF_TOPIC,
+                CanonicalTopic.UNKNOWN,
+            }
+            for t in topics
+        ):
             return AnswerResult(
                 answer=evidence.evidence,
                 sources=evidence.source_files,
-                canonical_topic=topic.value,
+                canonical_topic=topic_str,
                 is_supported=False,
                 corpus_version=evidence.corpus_version,
                 intent_id=evidence.intent_id,
@@ -109,11 +114,11 @@ class AnswerGenerator:
 
         # If Gemini failed or returned non-string, use deterministic fallback directly
         if raw_response is None or not isinstance(raw_response, str):
-            fallback_text = ResponseValidator.get_fallback_answer(topic)
+            fallback_text = ResponseValidator.get_fallback_answer_for_topics(topics)
             return AnswerResult(
                 answer=fallback_text,
                 sources=evidence.source_files,
-                canonical_topic=topic.value,
+                canonical_topic=topic_str,
                 is_supported=True,
                 corpus_version=evidence.corpus_version,
                 intent_id=evidence.intent_id,
@@ -135,15 +140,15 @@ class AnswerGenerator:
             parsed_answer_text = raw_response.strip()
 
         # Step 6: Validate Mandatory Factual Anchors
-        is_valid, failure_reason = ResponseValidator.validate(topic, parsed_answer_text)
+        is_valid, failure_reason = ResponseValidator.validate_topics(topics, parsed_answer_text)
 
         if not is_valid:
             # AI omitted essential fact or contradicted policy -> fallback to trusted PolicyFact
-            fallback_text = ResponseValidator.get_fallback_answer(topic)
+            fallback_text = ResponseValidator.get_fallback_answer_for_topics(topics)
             return AnswerResult(
                 answer=fallback_text,
                 sources=evidence.source_files,
-                canonical_topic=topic.value,
+                canonical_topic=topic_str,
                 is_supported=True,
                 corpus_version=evidence.corpus_version,
                 intent_id=evidence.intent_id,
@@ -156,7 +161,7 @@ class AnswerGenerator:
         return AnswerResult(
             answer=parsed_answer_text,
             sources=evidence.source_files,  # Strictly from Python evidence!
-            canonical_topic=topic.value,    # Strictly from Python classifier!
+            canonical_topic=topic_str,      # Strictly from Python classifier!
             is_supported=True,              # Strictly from Python retrieval!
             corpus_version=evidence.corpus_version,
             intent_id=evidence.intent_id,

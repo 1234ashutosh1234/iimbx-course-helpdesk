@@ -82,6 +82,7 @@ class ClassificationResult:
     matched_patterns: List[str]
     is_supported: bool
     requires_context: bool = False
+    canonical_topics: List[CanonicalTopic] = field(default_factory=list)
 
 
 @dataclass
@@ -97,3 +98,4 @@ class EvidenceObject:
     confidence: float
     intent_id: str
     metadata: Dict[str, Any] = field(default_factory=dict)
+    canonical_topics: List[CanonicalTopic] = field(default_factory=list)

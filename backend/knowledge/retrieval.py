@@ -34,7 +34,7 @@ class RetrievalEngine:
 
     def _compute_intent_id(
         self,
-        topic: CanonicalTopic,
+        topic_or_topics: Any,
         conversation_context: Optional[List[Dict[str, str]]] = None,
         normalized_query: str = ""
     ) -> str:
@@ -42,10 +42,18 @@ class RetrievalEngine:
         
         Guarantees:
         - The same canonical topic across paraphrases yields the same intent identifier.
+        - Multi-intent queries sort topics canonically so ordering in query does not alter intent_id.
         - Context-sensitive questions include a context digest to prevent cross-session collision.
         """
+        if isinstance(topic_or_topics, (list, tuple, set)):
+            topics_key = "+".join(sorted(t.value for t in topic_or_topics))
+        elif hasattr(topic_or_topics, "value"):
+            topics_key = topic_or_topics.value
+        else:
+            topics_key = str(topic_or_topics)
+
         if not conversation_context:
-            return f"intent:{topic.value}"
+            return f"intent:{topics_key}"
         
         # When context is present, hash the prior 2 conversation turns
         ctx_tokens = [
@@ -54,7 +62,7 @@ class RetrievalEngine:
         ]
         context_str = "|".join(ctx_tokens)
         ctx_hash = hashlib.sha256(context_str.encode("utf-8")).hexdigest()[:12]
-        return f"intent:{topic.value}:ctx:{ctx_hash}"
+        return f"intent:{topics_key}:ctx:{ctx_hash}"
 
     def retrieve(
         self,
@@ -73,21 +81,26 @@ class RetrievalEngine:
         classification: ClassificationResult = QueryClassifier.classify(
             question, conversation_context
         )
-        topic = classification.canonical_topic
+        topics = classification.canonical_topics or [classification.canonical_topic]
+        primary_topic = topics[0]
         norm_query = normalize_text(question)
-        intent_id = self._compute_intent_id(topic, conversation_context, norm_query)
+        intent_id = self._compute_intent_id(topics, conversation_context, norm_query)
 
         # 1. Handle Unsupported & Out-of-Scope Inquiries
-        if not classification.is_supported or topic in {
-            CanonicalTopic.REFUND_POLICY,
-            CanonicalTopic.SQL_INDEXING_AND_KUBERNETES,
-            CanonicalTopic.OFF_TOPIC,
-            CanonicalTopic.UNKNOWN,
-        }:
-            fact = PolicyResolver.get_fact(topic)
+        if not classification.is_supported or any(
+            t in {
+                CanonicalTopic.REFUND_POLICY,
+                CanonicalTopic.SQL_INDEXING_AND_KUBERNETES,
+                CanonicalTopic.OFF_TOPIC,
+                CanonicalTopic.UNKNOWN,
+            }
+            for t in topics
+        ):
+            fact = PolicyResolver.get_multi_topic_fact(topics)
             return EvidenceObject(
                 question=question,
-                canonical_topic=topic,
+                canonical_topic=primary_topic,
+                canonical_topics=topics,
                 is_supported=False,
                 evidence=fact.summary,
                 source_files=fact.source_files,
@@ -99,16 +112,17 @@ class RetrievalEngine:
                     "authority_note": fact.authority_note,
                     "matched_patterns": classification.matched_patterns,
                     "requires_context": classification.requires_context,
+                    "all_topics": [t.value for t in topics],
                 }
             )
 
         # 2. Retrieve Authoritative Policy Fact
-        fact = PolicyResolver.get_fact(topic)
+        fact = PolicyResolver.get_multi_topic_fact(topics)
 
         # Verify no superseded source files exist
         valid_sources = [
             src for src in fact.source_files
-            if not AuthorityHierarchy.is_superseded(src, topic)
+            if not any(AuthorityHierarchy.is_superseded(src, t) for t in topics)
         ]
 
         # Extract filtered, authoritative text from the source files
@@ -127,7 +141,8 @@ class RetrievalEngine:
 
         return EvidenceObject(
             question=question,
-            canonical_topic=topic,
+            canonical_topic=primary_topic,
+            canonical_topics=topics,
             is_supported=True,
             evidence=evidence_text,
             source_files=valid_sources,
@@ -139,6 +154,7 @@ class RetrievalEngine:
                 "authority_note": fact.authority_note,
                 "matched_patterns": classification.matched_patterns,
                 "requires_context": classification.requires_context,
-                "details": fact.details
+                "details": fact.details,
+                "all_topics": [t.value for t in topics],
             }
         )

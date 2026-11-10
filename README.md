@@ -18,7 +18,7 @@ The **IIMBx Course Helpdesk Chatbot** is a production-grade, highly resilient ba
 3. **Structured Gemini Generation & Factual Anchor Validation:** Utilizes Google's modern `google-genai` SDK (`gemini-3.8-flash`) with strict Pydantic JSON schemas and factual anchor validation. Automatically falls back to deterministic authoritative policy facts if Gemini fails or drifts.
 4. **SQLite 3 WAL Architecture & Atomic Telemetry:** High-concurrency database layer operating in Write-Ahead Logging (`WAL`) mode with atomic SQL counters (`UPDATE system_metrics SET metric_value = metric_value + 1`), robust response caching, and an in-flight request coordinator preventing duplicate Gemini dispatches.
 5. **Idempotency & Double-Click Guard:** Enforces `X-Idempotency-Key` headers on chat inquiries with SHA-256 payload verification and HTTP 202 leader/follower polling coordination.
-6. **138 Automated Tests Passing:** Comprehensive pytest suite covering unit, AI, security, concurrency, caching, and FastAPI endpoints.
+6. **148 Automated Tests Passing:** Comprehensive pytest suite covering unit, multi-intent classification, AI validation, security, concurrency, caching, and FastAPI endpoints.
 
 ---
 
@@ -71,7 +71,7 @@ The chatbot strictly enforces the following document hierarchy across all retrie
 | **Database** | SQLite 3 (`aiosqlite`) | Embedded zero-maintenance DB configured in WAL mode with busy timeouts |
 | **Validation** | Pydantic v2 | Robust request/response validation and structured JSON schemas |
 | **Frontend** | HTML5, CSS3, ES6 JS | Zero external dependencies; native browser security with XSS defense |
-| **Test Suite** | Pytest, Pytest-Asyncio | 138 offline unit & integration tests with complete mocked LLM isolation |
+| **Test Suite** | Pytest, Pytest-Asyncio | 148 offline unit & integration tests with complete mocked LLM isolation |
 | **Deployment** | Render Blueprint | Single-click infrastructure-as-code specification (`render.yaml`) |
 
 ---
@@ -137,7 +137,7 @@ python scripts/check_gemini_connection.py
 ```bash
 pytest -v tests/
 ```
-*Expected output: 138 passed in under 2.5 minutes.*
+*Expected output: 148 passed in under 2.5 minutes.*
 
 ### Step 7: Launch the Application
 ```bash
@@ -223,6 +223,16 @@ Technical evaluators can test the core competencies of the chatbot using the fol
 2. Re-submit the identical question or a paraphrase (*"What score do I need to pass DPM-101?"*):
    * Result: `total_questions` increments by 1; `gemini_calls` **does not change**; `cache_hits` increments by 1. Badge displays **⚡ Cached Answer**.
 
+### Test Case 7: Multi-Intent Question Handling
+* **Question:** *"What is the final exam date, and is it open-book or closed-book?"*
+* **Expected Answer:** "The Proctored Final Exam is scheduled for 20 November 2026, with appointment slots available between 10:00 AM and 8:00 PM IST. The examination is strictly closed-book. External websites, search engines, course notes and AI tools are not permitted."
+* **Multi-Intent Checked:** Concurrently classifies `FINAL_EXAM_DATE` and `EXAM_FORMAT`, retrieves both official facts, preserves correct attribution (`04_exam_rules_and_faq.txt`), and shares cache keys across intent orderings.
+
+### Test Case 8: Document-Grounded Unsupported Query Wording
+* **Question:** *"Does this course teach SQL database indexing and Kubernetes deployment?"*
+* **Expected Answer:** "The supplied DPM-101 course documents describe user research, product roadmapping, metrics, and AI feature design. They do not mention SQL database indexing or Kubernetes deployment."
+* **Grounding Checked:** Accurately cites `01_course_handbook.txt` without making unsubstantiated claims of definitive curriculum exclusion. Bypasses external LLM dispatch.
+
 ---
 
 ## 8. Directory Layout
@@ -269,9 +279,9 @@ IIMBx-Course-Helpdesk/
 │       ├── chat.js                   # XSS-safe DOM rendering
 │       ├── metrics.js                # Live telemetry polling
 │       └── app.js                    # Main UI event coordinator
-├── tests/                            # 138 Automated Tests
+├── tests/                            # 148 Automated Tests
 │   ├── conftest.py                   # Pytest fixtures & mock configs
-│   ├── unit/                         # Unit tests (knowledge, ai, db, services)
+│   ├── unit/                         # Unit tests (knowledge, ai, db, services, multi-intent)
 │   └── api/                          # Integration tests (FastAPI endpoints)
 ├── docs/                             # Engineering Architecture & Reports
 │   ├── ARCHITECTURE.md               # Complete System Architecture

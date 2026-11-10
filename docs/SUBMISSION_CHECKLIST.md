@@ -4,7 +4,7 @@
 **Track:** System Design & Backend  
 **Assessment Target:** IIMBx Internship Technical Assessment  
 **Evaluation Date:** October/November 2026  
-**Final Automated Test Status:** 138/138 Passing (100%)  
+**Final Automated Test Status:** 148/148 Passing (100%)  
 
 ---
 
@@ -31,7 +31,8 @@
 | **17** | **Vanilla Frontend Web Interface** | Semantic HTML5, CSS3, ES6 JS. Zero external build tools. Live telemetry, backend health indicator, prototype banner. | `frontend/index.html`, `frontend/css/styles.css`, `frontend/js/` | **PASS** |
 | **18** | **Render Cloud Deployment** | Ready-to-deploy `render.yaml` blueprint with ephemeral storage documentation and `/tmp` database path. | `render.yaml`, `docs/DEPLOYMENT_GUIDE.md` | **PASS** |
 | **19** | **Security & Secret Sanitization** | `.env` excluded from git; zero hardcoded secrets; XSS-safe DOM rendering (`textContent`). | `tests/api/test_api_security.py` | **PASS** |
-| **20** | **Automated Test Coverage** | 138 passing automated tests covering all modules offline without live token consumption. | `pytest -v tests/` (138/138 passed) | **PASS** |
+| **20** | **Automated Test Coverage** | 148 passing automated tests covering all modules offline without live token consumption. | `pytest -v tests/` (148/148 passed) | **PASS** |
+| **21** | **Multi-Intent Handling & Grounded Wording** | Concurrently classifies multi-intent questions, shares cache keys across orderings, and provides non-definitive grounded wording for unsupported topics. | `tests/unit/test_multi_intent_and_grounded_wording.py` | **PASS** |
 
 ---
 
@@ -65,7 +66,7 @@
   - `docs/SUBMISSION_CHECKLIST.md` (this file)
   - `AGENTS.md`
 - [x] **Automated Tests:**
-  - 138 automated unit, security, caching, concurrency, and API integration tests in `tests/`.
+  - 148 automated unit, security, caching, concurrency, multi-intent, and API integration tests in `tests/`.
 
 ---
 

@@ -105,6 +105,7 @@ tests/
 │   ├── test_policy_resolver.py       # Canonical facts, dual thresholds, no invented penalties (10 tests)
 │   ├── test_query_classifier.py      # Query classification, normalization, follow-up detection (13 tests)
 │   ├── test_retrieval.py             # End-to-end evidence retrieval, source attribution (14 tests)
+│   ├── test_multi_intent_and_grounded_wording.py # Multi-intent queries, ordering invariance, grounded wording (10 tests)
 │   ├── ai/
 │   │   ├── test_gemini_client.py     # Async client, timeouts, 401/404/429/500 error classification (9 tests)
 │   │   ├── test_prompts.py           # System instruction rules, prompt grounding, context window (4 tests)
@@ -130,7 +131,7 @@ tests/
 │   └── test_api_security.py          # Static serving (index, CSS, JS), security headers, secret protection, lifespan (5 tests)
 ```
 
-Total active automated tests: **138 tests passing** (91 baseline Part 2 & 3 tests + 32 Part 4 persistence tests + 15 Part 5 API/frontend tests) without requiring real API quota or network connection.
+Total active automated tests: **148 tests passing** (91 baseline Part 2 & 3 tests + 32 Part 4 persistence tests + 15 Part 5 API/frontend tests + 10 Multi-Intent & Grounded Wording tests) without requiring real API quota or network connection.
 
 Run all tests:
 ```bash

@@ -206,18 +206,24 @@ class ChatService:
             conversation_context=conversation_context,
         )
 
-        # Step 6: Handle Unsupported Questions (Zero Gemini Calls, No Cache Entry)
         topic = evidence.canonical_topic
-        if not evidence.is_supported or topic in {
-            CanonicalTopic.REFUND_POLICY,
-            CanonicalTopic.SQL_INDEXING_AND_KUBERNETES,
-            CanonicalTopic.OFF_TOPIC,
-            CanonicalTopic.UNKNOWN,
-        }:
+        topics = getattr(evidence, "canonical_topics", None) or [topic]
+        topic_str = "+".join(sorted(t.value for t in topics))
+
+        # Step 6: Handle Unsupported Questions (Zero Gemini Calls, No Cache Entry)
+        if not evidence.is_supported or any(
+            t in {
+                CanonicalTopic.REFUND_POLICY,
+                CanonicalTopic.SQL_INDEXING_AND_KUBERNETES,
+                CanonicalTopic.OFF_TOPIC,
+                CanonicalTopic.UNKNOWN,
+            }
+            for t in topics
+        ):
             unsupported_dict = {
                 "answer": evidence.evidence,
                 "sources": evidence.source_files,
-                "canonical_topic": topic.value,
+                "canonical_topic": topic_str,
                 "is_supported": False,
                 "cache_hit": False,
                 "is_fallback": False,
@@ -241,7 +247,7 @@ class ChatService:
         )
         cache_key = CacheService.build_cache_key(
             intent_id=evidence.intent_id,
-            canonical_topic=topic.value,
+            canonical_topic=topic_str,
             corpus_version=evidence.corpus_version,
             evidence_digest=evidence_digest,
             model_name=self.gemini_client.model,

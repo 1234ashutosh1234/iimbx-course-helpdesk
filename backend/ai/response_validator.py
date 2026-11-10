@@ -1,7 +1,7 @@
 """Factual anchor validation for AI-generated answers."""
 
 import re
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 from backend.knowledge.schemas import CanonicalTopic
 from backend.knowledge.policy_resolver import PolicyResolver
 
@@ -86,7 +86,30 @@ class ResponseValidator:
         return True, None
 
     @classmethod
+    def validate_topics(cls, topics: List[CanonicalTopic], answer: str) -> Tuple[bool, Optional[str]]:
+        """Validate generated text against multiple canonical topics.
+        
+        Args:
+            topics: List of canonical topics.
+            answer: The generated answer string.
+            
+        Returns:
+            Tuple[bool, Optional[str]]: (is_valid, failure_reason)
+        """
+        for t in topics:
+            is_valid, reason = cls.validate(t, answer)
+            if not is_valid:
+                return False, f"[{t.value}] {reason}"
+        return True, None
+
+    @classmethod
     def get_fallback_answer(cls, topic: CanonicalTopic) -> str:
         """Provide a 100% grounded fallback answer directly from the trusted PolicyFact."""
         fact = PolicyResolver.get_fact(topic)
+        return fact.summary
+
+    @classmethod
+    def get_fallback_answer_for_topics(cls, topics: List[CanonicalTopic]) -> str:
+        """Provide a 100% grounded fallback answer for one or multiple canonical topics."""
+        fact = PolicyResolver.get_multi_topic_fact(topics)
         return fact.summary

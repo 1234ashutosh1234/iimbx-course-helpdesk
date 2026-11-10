@@ -48,13 +48,18 @@ class QueryClassifier:
         ],
         CanonicalTopic.FINAL_EXAM_DATE: [
             (re.compile(r"\b(when\s+is\s+(the\s+)?(proctored\s+)?(final\s+)?exam\b|exam\s+(date|schedule|timing|slots?))\b"), 0.95),
+            (re.compile(r"\bwhen\s+(do\s+we\s+have|are\s+we\s+having|is|will\s+be|do\s+we\s+take)\s+(the\s+)?(proctored\s+)?(final\s+)?exam\b"), 0.95),
             (re.compile(r"\bwhen\s+is\s+it\s+scheduled\b"), 0.85),
             (re.compile(r"\bdate\s+of\s+(the\s+)?(final\s+)?exam\b"), 0.95),
+            (re.compile(r"\b(final\s+)?exam\s+date\b"), 0.95),
         ],
         CanonicalTopic.EXAM_FORMAT: [
             (re.compile(r"\b(open\s*book|closed\s*book)\b"), 0.95),
+            (re.compile(r"\bis\s+it\s+(open\s*book|closed\s*book)\b"), 0.95),
             (re.compile(r"\bis\s+the\s+(final\s+)?exam\s+(open|closed)\b"), 0.95),
+            (re.compile(r"\b(date\s+and\s+format|format\s+and\s+date|exam\s+format|format\s+of\s+(the\s+)?(final\s+)?exam)\b"), 0.95),
             (re.compile(r"\b(notes|external\s+websites|search\s+engines|google|ai\s+tools|calculator|rough\s+paper)\s+during\s+(the\s+)?(exam|test)\b"), 0.95),
+            (re.compile(r"\bcan\s+(i|we)\s+use\s+(notes|books|internet|ai|google)\b"), 0.95),
             (re.compile(r"\b(photo\s+id|aadhaar|passport|licence|pan\s+card)\s+(required|for\s+exam)\b"), 0.90),
             (re.compile(r"\bproctor(ed|ing)?\s+rules\b"), 0.90),
         ],
@@ -127,27 +132,32 @@ class QueryClassifier:
                 canonical_topic=CanonicalTopic.UNKNOWN,
                 confidence=0.0,
                 matched_patterns=[],
-                is_supported=False
+                is_supported=False,
+                canonical_topics=[CanonicalTopic.UNKNOWN],
             )
 
-        # 1. Direct Pattern Evaluation on Current Query
-        best_topic: CanonicalTopic = CanonicalTopic.UNKNOWN
-        best_confidence: float = 0.0
-        matched_rules: List[str] = []
+        # 1. Direct Pattern Evaluation on Current Query (collecting all high-confidence topics)
+        matched_topics: Dict[CanonicalTopic, Tuple[float, List[str], int]] = {}
 
         for topic, rules in cls._PATTERNS.items():
             for pattern, score in rules:
-                if pattern.search(normalized):
-                    if score > best_confidence:
-                        best_topic = topic
-                        best_confidence = score
-                        matched_rules = [pattern.pattern]
-                    elif score == best_confidence and best_topic == CanonicalTopic.UNKNOWN:
-                        best_topic = topic
-                        matched_rules.append(pattern.pattern)
+                m = pattern.search(normalized)
+                if m:
+                    if topic not in matched_topics:
+                        matched_topics[topic] = (score, [pattern.pattern], m.start())
+                    else:
+                        prev_score, prev_pats, prev_start = matched_topics[topic]
+                        new_pats = list(prev_pats)
+                        if pattern.pattern not in new_pats:
+                            new_pats.append(pattern.pattern)
+                        matched_topics[topic] = (
+                            max(prev_score, score),
+                            new_pats,
+                            min(prev_start, m.start()),
+                        )
 
         # 2. Context-Aware Evaluation for Follow-up Inquiries
-        if conversation_context and (best_topic == CanonicalTopic.UNKNOWN or best_topic == CanonicalTopic.REFUND_POLICY):
+        if conversation_context and (not matched_topics or CanonicalTopic.REFUND_POLICY in matched_topics):
             # Check if current query asks about dropping / refunding in reference to previous fee turn
             context_text = " ".join([turn.get("content", "") for turn in conversation_context[-2:]])
             norm_context = normalize_text(context_text)
@@ -155,23 +165,48 @@ class QueryClassifier:
             # If student says "What happens if I drop the course in Week 2?" or "How do I get a refund?"
             if any(term in normalized for term in ["drop", "cancel", "leave", "quit", "withdraw", "refund"]):
                 if any(fee_term in norm_context for fee_term in ["1500", "fee", "cost", "certificate", "verified"]):
-                    best_topic = CanonicalTopic.REFUND_POLICY
-                    best_confidence = 0.90
-                    matched_rules.append("context_fee_followup_refund")
+                    matched_topics[CanonicalTopic.REFUND_POLICY] = (
+                        0.90,
+                        ["context_fee_followup_refund"],
+                        0,
+                    )
 
-        # 3. Determine if topic is supported by the course documents
-        is_supported = best_topic not in {
-            CanonicalTopic.REFUND_POLICY,
-            CanonicalTopic.SQL_INDEXING_AND_KUBERNETES,
-            CanonicalTopic.OFF_TOPIC,
-            CanonicalTopic.UNKNOWN
-        }
+        # 3. Resolve matched topics list
+        if not matched_topics:
+            canonical_topics = [CanonicalTopic.UNKNOWN]
+            best_topic = CanonicalTopic.UNKNOWN
+            best_confidence = 0.1
+            matched_rules = []
+        else:
+            # Filter topics with strong match confidence
+            strong_matches = {
+                t: data for t, data in matched_topics.items() if data[0] >= 0.85
+            }
+            if not strong_matches:
+                strong_matches = matched_topics
 
-        # SQL & Kubernetes can be addressed by explaining course scope, but the technical subject is unsupported
+            # Sort topics by order of appearance in the student query
+            canonical_topics = sorted(strong_matches.keys(), key=lambda t: strong_matches[t][2])
+            best_topic = canonical_topics[0]
+            best_confidence = max(strong_matches[t][0] for t in canonical_topics)
+            matched_rules = [pat for t in canonical_topics for pat in strong_matches[t][1]]
+
+        # 4. Determine if all topics are supported by the course documents
+        is_supported = all(
+            t not in {
+                CanonicalTopic.REFUND_POLICY,
+                CanonicalTopic.SQL_INDEXING_AND_KUBERNETES,
+                CanonicalTopic.OFF_TOPIC,
+                CanonicalTopic.UNKNOWN,
+            }
+            for t in canonical_topics
+        )
+
         return ClassificationResult(
             canonical_topic=best_topic,
-            confidence=best_confidence if best_topic != CanonicalTopic.UNKNOWN else 0.1,
+            confidence=best_confidence,
             matched_patterns=matched_rules,
             is_supported=is_supported,
-            requires_context=bool(conversation_context)
+            requires_context=bool(conversation_context),
+            canonical_topics=canonical_topics,
         )
